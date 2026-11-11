@@ -105,8 +105,11 @@ public sealed class PurchaseRegister(StoreDatabase database) : IPurchases
             throw new BusinessException("El importe supera el saldo pendiente de la compra.");
 
         var now = DateTime.UtcNow;
-        purchase.Payments.Add(new PurchasePayment { OperationId = operationId, Amount = amount, Method = method,
-            AtUtc = now, UserId = session.UserId });
+        var payment = new PurchasePayment { OperationId = operationId, Amount = amount, Method = method, AtUtc = now, UserId = session.UserId };
+        purchase.Payments.Add(payment);
+        db.SaveChanges();
+        if (method == PaymentMethod.Efectivo)
+            CashRegister.Post(db, CashRegister.Active(db), session, now, CashKind.Proveedor, -amount, payment.Id, $"Pago de compra {purchaseId}");
         StoreAccess.Log(db, session.UserId, now, "Pago de compra registrado", $"Compra {purchaseId}");
         db.SaveChanges();
         transaction.Commit();

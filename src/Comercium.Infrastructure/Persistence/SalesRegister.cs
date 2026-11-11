@@ -1,11 +1,15 @@
 using Comercium.Application;
 using Comercium.Domain;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Comercium.Infrastructure.Persistence;
 
 public sealed class SalesRegister(StoreDatabase database) : ISales
 {
+    internal static readonly Expression<Func<Sale, SaleRow>> Summary = sale =>
+        new SaleRow(sale.Id, sale.OccurredUtc, sale.Total, sale.Payment.Method, sale.VoidedUtc != null, sale.CustomerName);
+
     public long Confirm(Session session, Checkout checkout)
     {
         if (checkout.OperationId == Guid.Empty || checkout.Lines.Count is < 1 or > 200
@@ -32,6 +36,13 @@ public sealed class SalesRegister(StoreDatabase database) : ISales
         var products = db.Products.Include(product => product.Inventory).Where(product => ids.Contains(product.Id))
             .ToDictionary(product => product.Id);
         var sale = new Sale { OperationId = checkout.OperationId, UserId = session.UserId, OccurredUtc = now, Dispatch = new Dispatch() };
+        if (checkout.CustomerId is { } customerId)
+        {
+            var customer = db.Customers.SingleOrDefault(row => row.Id == customerId && row.Active)
+                ?? throw new BusinessException("El cliente seleccionado ya no está activo.");
+            sale.CustomerId = customer.Id;
+            sale.CustomerName = customer.Name;
+        }
 
         foreach (var requested in checkout.Lines)
         {
@@ -41,7 +52,7 @@ public sealed class SalesRegister(StoreDatabase database) : ISales
             if (price != requested.ExpectedPrice)
                 throw new BusinessException($"El precio de {product.Name} cambió. Actualiza el carrito antes de cobrar.");
 
-            var line = new SaleLine { ProductId = product.Id, Code = product.Code, Name = product.Name,
+            var line = new SaleLine { ProductId = product.Id, CategoryId = product.CategoryId, Code = product.Code, Name = product.Name,
                 Location = product.Location, Quantity = requested.Quantity, UnitPrice = price, UnitCost = product.Cost };
             sale.Lines.Add(line);
             sale.Dispatch.Lines.Add(new DispatchLine { SaleLine = line });
@@ -63,6 +74,8 @@ public sealed class SalesRegister(StoreDatabase database) : ISales
 
         db.Sales.Add(sale);
         db.SaveChanges();
+        if (checkout.Method == PaymentMethod.Efectivo)
+            CashRegister.Post(db, CashRegister.Active(db), session, now, CashKind.Venta, sale.Total, sale.Id, $"Venta {sale.Id}");
         StoreAccess.Log(db, session.UserId, now, "Venta confirmada", $"Venta {sale.Id}");
         db.SaveChanges();
         transaction.Commit();
@@ -83,6 +96,11 @@ public sealed class SalesRegister(StoreDatabase database) : ISales
             throw new BusinessException("Esta venta ya se entregó. Su devolución requiere otro proceso.");
 
         var now = DateTime.UtcNow;
+        if (db.CashEntries.Any(entry => entry.Kind == CashKind.Venta && entry.SourceId == sale.Id))
+        {
+            var shift = CashRegister.Active(db) ?? throw new BusinessException("Abre caja para registrar el reintegro de esta venta.");
+            CashRegister.Post(db, shift, session, now, CashKind.Reversión, -sale.Total, sale.Id, $"Anulación de venta {sale.Id}");
+        }
         var operation = Guid.NewGuid();
         foreach (var group in sale.Lines.GroupBy(line => line.ProductId))
             StoreAccess.Move(db, StoreAccess.FindProduct(db, group.Key), session.UserId, operation, now,
@@ -101,8 +119,29 @@ public sealed class SalesRegister(StoreDatabase database) : ISales
     {
         using var db = database.Open();
         StoreAccess.Demand(db, session, Permission.Sell | Permission.VoidSale);
-        return db.Sales.OrderByDescending(sale => sale.Id).Take(200)
-            .Select(sale => new SaleRow(sale.Id, sale.OccurredUtc, sale.Total, sale.Payment.Method, sale.VoidedUtc.HasValue)).ToList();
+        return db.Sales.OrderByDescending(sale => sale.Id).Take(200).Select(Summary).ToList();
+    }
+
+    public IReadOnlyList<SaleRow> Search(Session session, DateOnly? from, DateOnly? through, string term)
+    {
+        using var db = database.Open();
+        StoreAccess.Demand(db, session, Permission.Sell | Permission.VoidSale);
+        if (from > through)
+            throw new BusinessException("Revisa el rango de fechas.");
+        var query = db.Sales.AsQueryable();
+        if (from.HasValue)
+            query = query.Where(sale => sale.OccurredUtc >= StoreDates.UtcStart(from.Value));
+        if (through.HasValue)
+            query = query.Where(sale => sale.OccurredUtc < StoreDates.UtcEnd(through.Value));
+        var key = term.Trim();
+        if (key.Length != 0)
+        {
+            var id = long.TryParse(key, out var number) ? number : -1;
+            var name = key.ToUpperInvariant();
+            query = query.Where(sale => sale.Id == id || StoreContext.Upper(sale.CustomerName).Contains(name)
+                || db.Customers.Any(c => c.Id == sale.CustomerId && c.Document != null && c.Document.Contains(name)));
+        }
+        return query.OrderByDescending(sale => sale.Id).Select(Summary).ToList();
     }
 
     public Receipt Receipt(Session session, long id)
@@ -114,6 +153,6 @@ public sealed class SalesRegister(StoreDatabase database) : ISales
         var cashier = db.Users.Where(user => user.Id == sale.UserId).Select(user => user.Name).Single();
         return new Receipt(sale.Id, sale.OccurredUtc, cashier, sale.Subtotal, sale.Discount, sale.Total, sale.Payment.Method,
             sale.Payment.Received, sale.VoidedUtc.HasValue, sale.Lines.OrderBy(line => line.Id)
-                .Select(line => new ReceiptLine(line.Code, line.Name, line.Quantity, line.UnitPrice)).ToList());
+                .Select(line => new ReceiptLine(line.Code, line.Name, line.Quantity, line.UnitPrice)).ToList(), sale.CustomerName);
     }
 }

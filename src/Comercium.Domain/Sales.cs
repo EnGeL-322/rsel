@@ -8,6 +8,8 @@ public sealed class Sale
     public long Id { get; set; }
     public Guid OperationId { get; set; }
     public int UserId { get; set; }
+    public int? CustomerId { get; set; }
+    public string CustomerName { get; set; } = "";
     public DateTime OccurredUtc { get; set; }
     public long Subtotal { get; set; }
     public long Discount { get; set; }
@@ -26,6 +28,7 @@ public sealed class SaleLine
     public long Id { get; set; }
     public long SaleId { get; set; }
     public int ProductId { get; set; }
+    public int? CategoryId { get; set; }
     public string Code { get; set; } = "";
     public string Name { get; set; } = "";
     public string Location { get; set; } = "";

@@ -12,6 +12,10 @@
         <DataTemplate DataType="{x:Type vm:CatalogModel}"><views:CatalogView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:InventoryModel}"><views:InventoryView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:PurchasesModel}"><views:PurchasesView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CustomersModel}"><views:CustomersView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CashModel}"><views:CashView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReportsModel}"><views:ReportsView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:StrategyModel}"><views:StrategyView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:SalesModel}"><views:SalesView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:DispatchModel}"><views:DispatchView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:AccountModel}"><views:AccountView /></DataTemplate>

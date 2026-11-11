@@ -38,11 +38,11 @@ public interface ICatalog
 }
 
 public sealed record CartLine(int ProductId, int Quantity, bool Wholesale, long ExpectedPrice);
-public sealed record Checkout(Guid OperationId, IReadOnlyList<CartLine> Lines, long Discount, PaymentMethod Method, long Received);
-public sealed record SaleRow(long Id, DateTime AtUtc, long Total, PaymentMethod Method, bool Voided);
+public sealed record Checkout(Guid OperationId, IReadOnlyList<CartLine> Lines, long Discount, PaymentMethod Method, long Received, int? CustomerId = null);
+public sealed record SaleRow(long Id, DateTime AtUtc, long Total, PaymentMethod Method, bool Voided, string Customer = "");
 public sealed record ReceiptLine(string Code, string Name, int Quantity, long UnitPrice);
 public sealed record Receipt(long Id, DateTime AtUtc, string Cashier, long Subtotal, long Discount, long Total,
-    PaymentMethod Method, long Received, bool Voided, IReadOnlyList<ReceiptLine> Lines);
+    PaymentMethod Method, long Received, bool Voided, IReadOnlyList<ReceiptLine> Lines, string Customer = "");
 
 public sealed record DispatchRow(long Id, DateTime AtUtc, DispatchStatus Status, int Verified, int Total);
 public sealed record PickLine(long Id, string Code, string Name, string Location, int Quantity, bool Verified);
@@ -54,6 +54,7 @@ public interface ISales
     long Confirm(Session session, Checkout checkout);
     void Void(Session session, long id, string reason);
     IReadOnlyList<SaleRow> Recent(Session session);
+    IReadOnlyList<SaleRow> Search(Session session, DateOnly? from, DateOnly? through, string term);
     Receipt Receipt(Session session, long id);
 }
 

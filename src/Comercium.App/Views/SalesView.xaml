@@ -12,7 +12,9 @@
                         <DockPanel>
                             <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
                                 <Button DockPanel.Dock="Right" Content="Buscar" Command="{Binding Search}" Margin="6,0,0,0" />
-                                <TextBox Text="{Binding Term, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Buscar por nombre o código" />
+                                <TextBox Text="{Binding Term, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Buscar por nombre o código">
+                                    <TextBox.InputBindings><KeyBinding Key="Enter" Command="{Binding Search}" /></TextBox.InputBindings>
+                                </TextBox>
                             </DockPanel>
                             <WrapPanel DockPanel.Dock="Bottom" Margin="0,7,0,0">
                                 <TextBlock Text="Cantidad" VerticalAlignment="Center" Margin="0,0,5,0" />
@@ -54,6 +56,8 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
                                 <TextBlock Text="Cobro" Style="{StaticResource Section}" />
+                                <TextBlock Text="Cliente" Style="{StaticResource FieldLabel}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding CustomerOptions}" SelectedItem="{Binding Customer}" DisplayMemberPath="Name" AutomationProperties.Name="Cliente de la venta" Margin="0,0,0,8" />
                                 <TextBlock Text="Subtotal" Style="{StaticResource Hint}" />
                                 <TextBlock Text="{Binding SubtotalText}" FontWeight="SemiBold" />
                                 <TextBlock Text="Descuento (S/)" Style="{StaticResource FieldLabel}" />
@@ -66,6 +70,7 @@
                                     <Button Content="Importe exacto" Command="{Binding ExactCash}" Margin="0,5,0,0" />
                                     <TextBlock Text="Cambio" Style="{StaticResource FieldLabel}" />
                                     <TextBlock Text="{Binding ChangeText}" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding CashStatus}" Style="{StaticResource Hint}" FontSize="12" Margin="0,6,0,0" />
                                 </StackPanel>
                                 <TextBlock Text="Total" Style="{StaticResource FieldLabel}" Margin="0,15,0,2" />
                                 <TextBlock Text="{Binding TotalText}" FontSize="24" Foreground="{StaticResource Blue}" FontWeight="Bold" />
@@ -78,8 +83,19 @@
             <TabItem Header="Historial" Padding="14,8">
                 <Border Style="{StaticResource Card}" Margin="8">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="Últimas 200 ventas" Style="{StaticResource Section}" />
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                            <TextBlock Text="Historial de ventas" Style="{StaticResource Section}" />
+                            <WrapPanel>
+                                <TextBlock Text="Venta, cliente o documento" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                <TextBox Text="{Binding HistoryTerm, UpdateSourceTrigger=PropertyChanged}" Width="145" AutomationProperties.Name="Venta, cliente o documento" />
+                                <DatePicker SelectedDate="{Binding HistoryFrom}" Width="119" Margin="6,0,0,0" AutomationProperties.Name="Fecha inicial" />
+                                <DatePicker SelectedDate="{Binding HistoryThrough}" Width="119" Margin="6,0,0,0" AutomationProperties.Name="Fecha final" />
+                                <Button Content="Filtrar" Command="{Binding FindSales}" Margin="6,0,0,0" />
+                            </WrapPanel>
+                        </StackPanel>
                         <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                            <Button Content="Ver comprobante" Command="{Binding ViewReceipt}" Margin="0,0,6,0" />
+                            <Button Content="Guardar PDF" Command="{Binding SaveReceipt}" Margin="0,0,6,0" />
                             <Button Content="Imprimir comprobante" Command="{Binding PrintReceipt}" Margin="0,0,14,0" />
                             <TextBlock Text="Motivo de anulación" VerticalAlignment="Center" Margin="0,0,6,0" />
                             <TextBox Width="150" Text="{Binding VoidReason, UpdateSourceTrigger=PropertyChanged}" MaxLength="250" AutomationProperties.Name="Motivo de anulación" />
@@ -89,6 +105,7 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Venta" Binding="{Binding Id}" Width="75" />
                                 <DataGridTextColumn Header="Fecha" Binding="{Binding AtUtc, Converter={StaticResource Display}}" Width="*" />
+                                <DataGridTextColumn Header="Cliente" Binding="{Binding Customer}" Width="*" />
                                 <DataGridTextColumn Header="Pago" Binding="{Binding Method}" Width="110" />
                                 <DataGridTextColumn Header="Total" Binding="{Binding Total, Converter={StaticResource Display}, ConverterParameter=money}" Width="115" />
                                 <DataGridTextColumn Header="Estado" Binding="{Binding Voided, Converter={StaticResource Display}, ConverterParameter=sale}" Width="100" />

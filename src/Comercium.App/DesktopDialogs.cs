@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using Microsoft.Win32;
+using Comercium.Application;
+using Comercium.App.Views;
 
 namespace Comercium.App;
 
@@ -33,6 +35,15 @@ public sealed class DesktopDialogs(string dataFolder)
     }
 
     public void Inform(string message) => MessageBox.Show(Owner, message, "Comercium", MessageBoxButton.OK, MessageBoxImage.Information);
+
+    public void Preview(ReportData receipt) => new ReceiptWindow(receipt) { Owner = Owner }.ShowDialog();
+
+    public string? SaveDocument(string name, bool excel)
+    {
+        var dialog = new SaveFileDialog { Filter = excel ? "Libro Excel|*.xlsx" : "Documento PDF|*.pdf",
+            DefaultExt = excel ? ".xlsx" : ".pdf", FileName = name };
+        return dialog.ShowDialog(Owner) == true ? dialog.FileName : null;
+    }
 
     public void Print(string title, IEnumerable<string> lines)
     {

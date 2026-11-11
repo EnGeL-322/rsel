@@ -11,7 +11,11 @@ public enum Permission
     Dispatch = 32,
     VoidSale = 64,
     ManageBackups = 128,
-    Buy = 256
+    Buy = 256,
+    Clients = 512,
+    Finance = 1024,
+    Reports = 2048,
+    Plan = 4096
 }
 
 public sealed class Role

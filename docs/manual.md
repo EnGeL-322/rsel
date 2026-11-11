@@ -28,3 +28,27 @@ En **Ventas → Historial** puedes imprimir el comprobante interno. Para anular 
 En **Mi cuenta**, usa **Crear respaldo** y guarda el archivo `.comercium` en una ubicación segura. Contiene la base, las fotos y las credenciales protegidas por hash.
 
 **Restaurar respaldo** sustituye la base activa. Antes de restaurar, Comercium valida el archivo y guarda una copia de los datos actuales. Después, ingresa con la cuenta del respaldo. La ventana de confirmación del resultado indica dónde quedó la copia previa.
+
+## Clientes y comprobantes
+
+En **Clientes** registra el nombre, la clasificación y, de forma opcional, el documento y el teléfono. Puedes buscar por esos campos y consultar el número de compras confirmadas y el total acumulado. Desactiva un cliente para retirarlo de la lista de nuevas ventas y conservar su historial.
+
+En **Ventas**, selecciona un cliente o **Público general**. Elegir un cliente mayorista selecciona esa tarifa para los artículos que agregues a continuación. En el historial puedes filtrar por fecha, número de venta, cliente o documento y guardar un comprobante interno en PDF.
+
+## Caja y finanzas
+
+1. En **Caja**, escribe el saldo inicial y selecciona **Abrir caja**. Con la sesión abierta, las ventas en efectivo suman el total cobrado después del cambio y los pagos en efectivo a proveedores reducen el saldo. Tarjetas y transferencias quedan en sus respectivos historiales.
+2. Registra ingresos, gastos y retiros manuales con su concepto. Consulta el saldo esperado y el historial de movimientos.
+3. Al terminar, ingresa el efectivo contado y cierra la caja. La diferencia es el contado menos el esperado. Puedes revisar sesiones anteriores y sus movimientos.
+
+Puedes vender con caja cerrada. Esos cobros se registran en ventas. Para anular un cobro que se asentó en una sesión, abre una caja para registrar el reintegro. Los gastos registrados en caja se deducen del margen bruto en el reporte financiero. Los retiros y pagos a proveedores afectan el efectivo. El costo de cada venta ya refleja la mercadería consumida.
+
+## Reportes y análisis
+
+En **Reportes**, elige una consulta, el período y la categoría, y selecciona **Aplicar**. Puedes usar los atajos de hoy, semana y mes. PDF y Excel guardan el resultado que ves en la tabla. Los reportes de existencias y reposición muestran el stock actual. En ventas históricas, el costo y el nombre del cliente se toman al confirmar. En ventas previas a esta versión, el filtro de categoría usa la categoría actual del producto.
+
+En **Análisis comercial**, compara las ventas con el período inmediatamente anterior de igual duración. Usa los reportes de productos vendidos, rotación, reposición y productos sin ventas. También puedes escribir preguntas como «¿Cuánto vendí hoy?», «¿Qué productos debo comprar?» o «¿Qué productos llevan 30 días sin venderse?». La rotación divide las unidades vendidas entre el promedio de existencias inicial y final.
+
+## Planificación estratégica
+
+En **Identidad y FODA**, guarda la misión, visión, valores y los cuatro componentes del análisis. En **Objetivos y mediciones**, registra un objetivo con indicador, unidad, meta y fecha límite. Selecciona el objetivo para registrar mediciones sucesivas y consultar su avance. Puedes actualizar la estrategia y guardar la evaluación al cerrar el objetivo.

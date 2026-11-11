@@ -24,6 +24,11 @@
                         <Button Content="Productos" Command="{Binding GoCatalog}" Style="{StaticResource Nav}" />
                         <Button Content="Inventario" Command="{Binding GoInventory}" Style="{StaticResource Nav}" />
                         <Button Content="Compras y proveedores" Command="{Binding GoPurchases}" Style="{StaticResource Nav}" />
+                        <Button Content="Clientes" Command="{Binding GoCustomers}" Style="{StaticResource Nav}" />
+                        <Button Content="Caja" Command="{Binding GoCash}" Style="{StaticResource Nav}" />
+                        <Button Content="Reportes" Command="{Binding GoReports}" Style="{StaticResource Nav}" />
+                        <Button Content="Análisis comercial" Command="{Binding GoAnalysis}" Style="{StaticResource Nav}" />
+                        <Button Content="Planificación" Command="{Binding GoStrategy}" Style="{StaticResource Nav}" />
                     </StackPanel>
                 </ScrollViewer>
             </DockPanel>

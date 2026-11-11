@@ -46,6 +46,96 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                     b.ToTable("Audit");
                 });
 
+            modelBuilder.Entity("Comercium.Domain.CashEntry", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CashSessionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("OperationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("SourceId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtUtc");
+
+                    b.HasIndex("CashSessionId");
+
+                    b.HasIndex("OperationId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Kind", "SourceId")
+                        .IsUnique();
+
+                    b.ToTable("CashEntries", t =>
+                        {
+                            t.HasCheckConstraint("CK_CashEntry_Amount", "Amount <> 0");
+                        });
+                });
+
+            modelBuilder.Entity("Comercium.Domain.CashSession", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ClosedById")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ClosedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("Counted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("ExpectedAtClose")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("OpenedById")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("OpenedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Opening")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClosedById");
+
+                    b.HasIndex("OpenedById");
+
+                    b.ToTable("CashSessions", t =>
+                        {
+                            t.HasCheckConstraint("CK_CashSession_Amounts", "Opening >= 0 AND (Counted IS NULL OR Counted >= 0)");
+                        });
+                });
+
             modelBuilder.Entity("Comercium.Domain.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -66,6 +156,43 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("Comercium.Domain.Customer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Document")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SearchName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Wholesale")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Document")
+                        .IsUnique();
+
+                    b.HasIndex("SearchName");
+
+                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("Comercium.Domain.Dispatch", b =>
@@ -128,6 +255,37 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                     b.HasIndex("VerifiedById");
 
                     b.ToTable("DispatchLine");
+                });
+
+            modelBuilder.Entity("Comercium.Domain.IndicatorReading", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ObjectiveId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ObjectiveId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("IndicatorReading");
                 });
 
             modelBuilder.Entity("Comercium.Domain.Inventory", b =>
@@ -193,6 +351,51 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_Movements_Change", "Change <> 0 AND Balance >= 0");
                         });
+                });
+
+            modelBuilder.Entity("Comercium.Domain.Objective", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("Due")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Evaluation")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Indicator")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Strategy")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("StrategyPlanId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Target")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StrategyPlanId");
+
+                    b.ToTable("Objectives");
                 });
 
             modelBuilder.Entity("Comercium.Domain.Payment", b =>
@@ -454,6 +657,13 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                     b.Property<long>("Cost")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("Discount")
                         .HasColumnType("INTEGER");
 
@@ -483,6 +693,8 @@ namespace Comercium.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerId");
+
                     b.HasIndex("OccurredUtc");
 
                     b.HasIndex("OperationId")
@@ -502,6 +714,9 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CategoryId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Code")
@@ -533,6 +748,8 @@ namespace Comercium.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("ProductId");
 
                     b.HasIndex("SaleId");
@@ -541,6 +758,44 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_SaleLines_Quantity", "Quantity > 0 AND UnitPrice > 0 AND UnitCost >= 0");
                         });
+                });
+
+            modelBuilder.Entity("Comercium.Domain.StrategyPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Mission")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Opportunities")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Strengths")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Threats")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Values")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Vision")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Weaknesses")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Plans");
                 });
 
             modelBuilder.Entity("Comercium.Domain.Supplier", b =>
@@ -612,6 +867,35 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Comercium.Domain.CashEntry", b =>
+                {
+                    b.HasOne("Comercium.Domain.CashSession", null)
+                        .WithMany("Entries")
+                        .HasForeignKey("CashSessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Comercium.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Comercium.Domain.CashSession", b =>
+                {
+                    b.HasOne("Comercium.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("ClosedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Comercium.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("OpenedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Comercium.Domain.Dispatch", b =>
                 {
                     b.HasOne("Comercium.Domain.User", null)
@@ -658,6 +942,21 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                     b.Navigation("SaleLine");
                 });
 
+            modelBuilder.Entity("Comercium.Domain.IndicatorReading", b =>
+                {
+                    b.HasOne("Comercium.Domain.Objective", null)
+                        .WithMany("Readings")
+                        .HasForeignKey("ObjectiveId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Comercium.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Comercium.Domain.Inventory", b =>
                 {
                     b.HasOne("Comercium.Domain.Product", null)
@@ -678,6 +977,15 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                     b.HasOne("Comercium.Domain.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Comercium.Domain.Objective", b =>
+                {
+                    b.HasOne("Comercium.Domain.StrategyPlan", null)
+                        .WithMany()
+                        .HasForeignKey("StrategyPlanId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -768,6 +1076,11 @@ namespace Comercium.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Comercium.Domain.Sale", b =>
                 {
+                    b.HasOne("Comercium.Domain.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Comercium.Domain.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -782,6 +1095,11 @@ namespace Comercium.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Comercium.Domain.SaleLine", b =>
                 {
+                    b.HasOne("Comercium.Domain.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Comercium.Domain.Product", null)
                         .WithMany()
                         .HasForeignKey("ProductId")
@@ -806,9 +1124,19 @@ namespace Comercium.Infrastructure.Persistence.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("Comercium.Domain.CashSession", b =>
+                {
+                    b.Navigation("Entries");
+                });
+
             modelBuilder.Entity("Comercium.Domain.Dispatch", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Comercium.Domain.Objective", b =>
+                {
+                    b.Navigation("Readings");
                 });
 
             modelBuilder.Entity("Comercium.Domain.Product", b =>

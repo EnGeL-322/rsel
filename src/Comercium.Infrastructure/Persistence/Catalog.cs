@@ -15,7 +15,7 @@ public sealed class Catalog(StoreDatabase database) : ICatalog
         var query = db.Products.AsNoTracking();
         var term = text.Trim().ToUpperInvariant();
         if (term.Length > 0)
-            query = query.Where(product => product.Code.Contains(term) || product.Name.ToUpper().Contains(term));
+            query = query.Where(product => product.Code.Contains(term) || StoreContext.Upper(product.Name).Contains(term));
         if (!string.IsNullOrWhiteSpace(category))
         {
             var key = category.Trim().ToUpperInvariant();

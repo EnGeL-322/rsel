@@ -1,0 +1,16 @@
+<Window x:Class="Comercium.App.Views.ReceiptWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Comercium · Comprobante interno" Width="760" Height="520" MinWidth="525" MinHeight="360"
+        WindowStartupLocation="CenterOwner" Style="{StaticResource AppWindow}" Language="es-PE">
+    <Border Style="{StaticResource Card}" Margin="16">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                <TextBlock Text="{Binding Title}" Style="{StaticResource Heading}" />
+                <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+            </StackPanel>
+            <Button DockPanel.Dock="Bottom" Content="Cerrar" IsCancel="True" HorizontalAlignment="Right" Margin="0,12,0,0" />
+            <DataGrid x:Name="Lines" ItemsSource="{Binding Rows}" AutomationProperties.Name="Detalle del comprobante" />
+        </DockPanel>
+    </Border>
+</Window>

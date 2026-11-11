@@ -10,6 +10,8 @@ La publicación apunta a Windows x64 con compilación 19041 o posterior. En Wind
 
 La aplicación guarda su base `comercium.db` bajo `%LOCALAPPDATA%\Comercium` en el perfil de Windows que la ejecuta. El ejecutable puede moverse sin mover los datos. Para trasladar la tienda a otra computadora, crea un respaldo desde **Mi cuenta**, ejecuta la misma versión o una posterior compatible en el equipo destino, registra una cuenta inicial y restaura el respaldo. Luego ingresa con las credenciales de la cuenta del respaldo.
 
+Para actualizar una instalación anterior, crea un respaldo, cierra Comercium y reemplaza el ejecutable. Al abrir la nueva versión se aplican las migraciones sobre la base del mismo perfil de Windows. El archivo de respaldo previo también puede restaurarse con la nueva versión.
+
 ## Compilar desde el código fuente
 
 Con el SDK .NET 10 instalado, ejecuta desde la carpeta raíz del proyecto:

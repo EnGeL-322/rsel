@@ -13,10 +13,14 @@ public sealed class ShellModel : ViewModel
     private readonly IDispatch dispatch;
     private readonly IDashboard dashboard;
     private readonly IPurchases purchases;
+    private readonly ICustomers customers;
+    private readonly ICash cash;
+    private readonly IReporting reports;
+    private readonly IStrategy strategy;
     private ViewModel current = null!;
 
     public ShellModel(IAccounts accounts, IBackups backups, DesktopDialogs dialogs, ICatalog catalog, ISales sales, IDispatch dispatch,
-        IDashboard dashboard, IPurchases purchases) : base(dialogs)
+        IDashboard dashboard, IPurchases purchases, ICustomers customers, ICash cash, IReporting reports, IStrategy strategy) : base(dialogs)
     {
         this.accounts = accounts;
         this.backups = backups;
@@ -25,6 +29,10 @@ public sealed class ShellModel : ViewModel
         this.dispatch = dispatch;
         this.dashboard = dashboard;
         this.purchases = purchases;
+        this.customers = customers;
+        this.cash = cash;
+        this.reports = reports;
+        this.strategy = strategy;
         SignOut();
     }
 
@@ -33,7 +41,7 @@ public sealed class ShellModel : ViewModel
     private void SignOut() => Current = new LoginModel(accounts, Dialogs, SignIn);
 
     private void SignIn(Session session) => Current = new WorkspaceModel(session, Dialogs, catalog, sales, dispatch,
-        dashboard, purchases, accounts, backups, SignOut);
+        dashboard, purchases, customers, cash, reports, strategy, accounts, backups, SignOut);
 }
 
 public sealed class WorkspaceModel : ViewModel
@@ -42,10 +50,11 @@ public sealed class WorkspaceModel : ViewModel
     private string title = "";
 
     public WorkspaceModel(Session session, DesktopDialogs dialogs, ICatalog catalog, ISales sales, IDispatch dispatch,
-        IDashboard dashboard, IPurchases purchases, IAccounts accounts, IBackups backups, Action signOut) : base(dialogs)
+        IDashboard dashboard, IPurchases purchases, ICustomers customers, ICash cash, IReporting reports, IStrategy strategy,
+        IAccounts accounts, IBackups backups, Action signOut) : base(dialogs)
     {
         User = session.Name;
-        var salesModel = new SalesModel(session, dialogs, catalog, sales);
+        var salesModel = new SalesModel(session, dialogs, catalog, sales, customers, cash);
         GoSales = Action(() => Open("Ventas", salesModel, salesModel.Refresh), () => Allows(Permission.Sell));
         GoDashboard = Action(() => Open("Resumen de la tienda", new DashboardModel(session, dialogs, dashboard, GoSales)),
             () => Allows(Permission.ViewDashboard));
@@ -53,6 +62,11 @@ public sealed class WorkspaceModel : ViewModel
         GoCatalog = Action(() => Open("Productos", new CatalogModel(session, dialogs, catalog)), () => Allows(Permission.ManageCatalog));
         GoInventory = Action(() => Open("Inventario", new InventoryModel(session, dialogs, catalog)), () => Allows(Permission.AdjustInventory));
         GoPurchases = Action(() => Open("Compras y proveedores", new PurchasesModel(session, dialogs, purchases, catalog)), () => Allows(Permission.Buy));
+        GoCustomers = Action(() => Open("Clientes", new CustomersModel(session, dialogs, customers, sales)), () => Allows(Permission.Clients));
+        GoCash = Action(() => Open("Caja", new CashModel(session, dialogs, cash)), () => Allows(Permission.Finance));
+        GoReports = Action(() => Open("Reportes", new ReportsModel(session, dialogs, reports, analysis: false)), () => Allows(Permission.Reports));
+        GoAnalysis = Action(() => Open("Análisis comercial", new ReportsModel(session, dialogs, reports, analysis: true)), () => Allows(Permission.Reports));
+        GoStrategy = Action(() => Open("Planificación estratégica", new StrategyModel(session, dialogs, strategy)), () => Allows(Permission.Plan));
         GoAccount = Action(() => Open("Mi cuenta", new AccountModel(accounts, backups, dialogs, session, signOut)));
         SignOut = Action(() =>
         {
@@ -76,6 +90,11 @@ public sealed class WorkspaceModel : ViewModel
     public ICommand GoCatalog { get; }
     public ICommand GoInventory { get; }
     public ICommand GoPurchases { get; }
+    public ICommand GoCustomers { get; }
+    public ICommand GoCash { get; }
+    public ICommand GoReports { get; }
+    public ICommand GoAnalysis { get; }
+    public ICommand GoStrategy { get; }
     public ICommand GoAccount { get; }
     public ICommand SignOut { get; }
 

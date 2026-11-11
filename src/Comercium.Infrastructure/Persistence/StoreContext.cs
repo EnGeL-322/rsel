@@ -19,9 +19,17 @@ public sealed class StoreContext(DbContextOptions<StoreContext> options) : DbCon
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<Purchase> Purchases => Set<Purchase>();
     public DbSet<PurchasePayment> PurchasePayments => Set<PurchasePayment>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<CashSession> CashSessions => Set<CashSession>();
+    public DbSet<CashEntry> CashEntries => Set<CashEntry>();
+    public DbSet<StrategyPlan> Plans => Set<StrategyPlan>();
+    public DbSet<Objective> Objectives => Set<Objective>();
+
+    public static string Upper(string text) => text.ToUpperInvariant();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        model.HasDbFunction(typeof(StoreContext).GetMethod(nameof(Upper))!).HasName("comercium_upper");
         model.Entity<User>().HasIndex(user => user.Login).IsUnique();
         model.Entity<Role>().HasIndex(role => role.Name).IsUnique();
         model.Entity<AuditEntry>().HasIndex(entry => entry.OccurredUtc);
@@ -74,6 +82,22 @@ public sealed class StoreContext(DbContextOptions<StoreContext> options) : DbCon
         model.Entity<PurchasePayment>().HasOne<User>().WithMany().HasForeignKey(payment => payment.UserId);
         model.Entity<PurchasePayment>().ToTable(table => table.HasCheckConstraint("CK_PurchasePayments_Amount", "Amount > 0"));
 
+        model.Entity<Customer>().HasIndex(customer => customer.Document).IsUnique();
+        model.Entity<Customer>().HasIndex(customer => customer.SearchName);
+        model.Entity<Sale>().HasOne<Customer>().WithMany().HasForeignKey(sale => sale.CustomerId);
+        model.Entity<SaleLine>().HasOne<Category>().WithMany().HasForeignKey(line => line.CategoryId);
+        model.Entity<CashSession>().HasOne<User>().WithMany().HasForeignKey(shift => shift.OpenedById);
+        model.Entity<CashSession>().HasOne<User>().WithMany().HasForeignKey(shift => shift.ClosedById);
+        model.Entity<CashSession>().ToTable(table => table.HasCheckConstraint("CK_CashSession_Amounts", "Opening >= 0 AND (Counted IS NULL OR Counted >= 0)"));
+        model.Entity<CashEntry>().HasOne<User>().WithMany().HasForeignKey(entry => entry.UserId);
+        model.Entity<CashEntry>().HasIndex(entry => new { entry.Kind, entry.SourceId }).IsUnique();
+        model.Entity<CashEntry>().HasIndex(entry => entry.OperationId).IsUnique();
+        model.Entity<CashEntry>().HasIndex(entry => entry.AtUtc);
+        model.Entity<CashEntry>().ToTable(table => table.HasCheckConstraint("CK_CashEntry_Amount", "Amount <> 0"));
+        model.Entity<StrategyPlan>().Property(plan => plan.Id).ValueGeneratedNever();
+        model.Entity<Objective>().HasOne<StrategyPlan>().WithMany().HasForeignKey(goal => goal.StrategyPlanId);
+        model.Entity<IndicatorReading>().HasOne<User>().WithMany().HasForeignKey(reading => reading.UserId);
+
         foreach (var foreignKey in model.Model.GetEntityTypes().SelectMany(entity => entity.GetForeignKeys()))
             foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
     }
@@ -85,7 +109,13 @@ public sealed class StoreDatabase(string path, bool pooling = true)
         .UseSqlite(new SqliteConnectionStringBuilder { DataSource = path, ForeignKeys = true, Pooling = pooling, DefaultTimeout = 5 }.ToString())
         .Options;
 
-    public StoreContext Open() => new(options);
+    public StoreContext Open()
+    {
+        var context = new StoreContext(options);
+        var connection = (SqliteConnection)context.Database.GetDbConnection();
+        connection.CreateFunction<string, string>("comercium_upper", StoreContext.Upper, isDeterministic: true);
+        return context;
+    }
 
     public void Migrate()
     {

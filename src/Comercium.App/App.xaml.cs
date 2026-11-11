@@ -37,7 +37,8 @@ public partial class App : System.Windows.Application
             var dialogs = new DesktopDialogs(folder);
             var accounts = new Accounts(database);
             var shell = new ShellModel(accounts, new StoreBackups(database), dialogs, new Catalog(database), new SalesRegister(database),
-                new DispatchRegister(database), new DashboardQueries(database), new PurchaseRegister(database));
+                new DispatchRegister(database), new DashboardQueries(database), new PurchaseRegister(database),
+                new Customers(database), new CashRegister(database), new Reporting(database), new Strategy(database));
             MainWindow = new MainWindow { DataContext = shell };
             MainWindow.Show();
         }

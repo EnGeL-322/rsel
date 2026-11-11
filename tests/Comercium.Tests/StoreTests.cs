@@ -4,6 +4,8 @@ using Comercium.Infrastructure.Persistence;
 using Comercium.Infrastructure.Security;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Comercium.Tests;
 
@@ -192,6 +194,123 @@ public sealed class StoreTests : IDisposable
         if (stock > 0)
             catalog.Move(owner, id, Guid.NewGuid(), MovementKind.Entrada, stock, "Conteo inicial");
         return id;
+    }
+
+    [Fact]
+    public void CustomerHistoryRetainsOriginalNameAndSkipsVoidsInItsTotals()
+    {
+        var service = new Customers(database);
+        var customer = service.Save(owner, new CustomerCard(0, "María Pérez", "12345678", "999001122", true, true));
+        Assert.Throws<BusinessException>(() => service.Save(owner, new CustomerCard(0, "Duplicado", "12345678", "", false, true)));
+        var product = AddProduct(3);
+        var id = sales.Confirm(owner, new Checkout(Guid.NewGuid(), [new(product, 1, true, 800)], 0, PaymentMethod.Transferencia, 0, customer));
+        service.Save(owner, new CustomerCard(customer, "María Torres", "12345678", "", true, false));
+        Assert.Equal("María Pérez", sales.Receipt(owner, id).Customer);
+        Assert.Empty(service.ForSale(owner));
+        Assert.Equal(800, Assert.Single(service.Search(owner, "maría")).Spent);
+        var day = DateOnly.FromDateTime(DateTime.Today);
+        Assert.Equal(id, Assert.Single(sales.Search(owner, day, day, "12345678")).Id);
+        Assert.Equal(id, Assert.Single(sales.Search(owner, day, day, "MARÍA PÉREZ")).Id);
+        Assert.Throws<BusinessException>(() => sales.Confirm(owner, new Checkout(Guid.NewGuid(), [new(product, 1, false, 1000)], 0, PaymentMethod.Tarjeta, 0, customer)));
+        sales.Void(owner, id, "Prueba de anulación");
+        Assert.Equal(0, Assert.Single(service.Search(owner, "")).Purchases);
+        Assert.True(Assert.Single(service.History(owner, customer)).Voided);
+    }
+
+    [Fact]
+    public void CashReconcilesSalesExpensesReversalsAndSupplierPayments()
+    {
+        var cash = new CashRegister(database);
+        var purchases = new PurchaseRegister(database);
+        var product = AddProduct(5);
+        var supplier = purchases.SaveSupplier(owner, new SupplierRow(0, "Distribuidora", ""));
+        var purchase = purchases.Receive(owner, new ReceivePurchase(Guid.NewGuid(), supplier, "", [new(product, 3, 400)]));
+        cash.Open(owner, 2000);
+        Assert.Throws<BusinessException>(() => cash.Open(owner, 0));
+        var shift = cash.Read(owner).Open!.Id;
+        var checkout = new Checkout(Guid.NewGuid(), [new(product, 1, false, 1000)], 0, PaymentMethod.Efectivo, 1500);
+        var id = sales.Confirm(owner, checkout);
+        Assert.Equal(id, sales.Confirm(owner, checkout));
+        sales.Confirm(owner, checkout with { OperationId = Guid.NewGuid(), Method = PaymentMethod.Tarjeta });
+        purchases.Pay(owner, purchase, Guid.NewGuid(), 400, PaymentMethod.Efectivo);
+        var movement = Guid.NewGuid();
+        cash.Move(owner, shift, movement, CashKind.Gasto, 125, "Servicio");
+        cash.Move(owner, shift, movement, CashKind.Gasto, 125, "Servicio");
+        Assert.Equal(2475, cash.Read(owner).Open!.Expected);
+        cash.Close(owner, shift, 2400);
+        Assert.Equal(-75, Assert.Single(cash.Read(owner).Shifts).Difference);
+        Assert.Throws<BusinessException>(() => sales.Void(owner, id, "Caja cerrada"));
+        Assert.False(sales.Receipt(owner, id).Voided);
+        cash.Open(owner, 1500);
+        sales.Void(owner, id, "Efectivo devuelto");
+        sales.Void(owner, id, "Reintento");
+        var current = cash.Read(owner).Open!;
+        Assert.Equal(500, current.Expected);
+        Assert.Equal(CashKind.Reversión, Assert.Single(cash.Entries(owner, current.Id)).Kind);
+    }
+
+    [Fact]
+    public void ReportsFilterCategoriesAndAllocateEveryCentOfTheDiscount()
+    {
+        var first = AddProduct(4);
+        var second = AddProduct(4, "PL-2");
+        catalog.Save(owner, catalog.Load(owner, second) with { Category = "Mesa" });
+        sales.Confirm(owner, new Checkout(Guid.NewGuid(), [new(first, 1, false, 1000), new(second, 1, false, 1000)], 1, PaymentMethod.Tarjeta, 0));
+        catalog.Save(owner, catalog.Load(owner, first) with { Category = "Mesa" });
+        var service = new Reporting(database);
+        var day = DateOnly.FromDateTime(DateTime.Today);
+        var categories = service.Categories(owner).Where(row => row.Id.HasValue).ToList();
+        var cents = categories.Select(category => Assert.IsType<decimal>(Assert.Single(service.Read(owner,
+            new ReportFilter(ReportKind.Ventas, day, day, category.Id)).Rows)[5])).ToList();
+        Assert.Equal(19.99m, cents.Sum());
+        Assert.Equal(1999, service.Compare(owner, day, day).Revenue);
+        foreach (var kind in Enum.GetValues<ReportKind>())
+        {
+            var result = service.Read(owner, new ReportFilter(kind, day, day, categories[0].Id));
+            Assert.All(result.Rows, row => Assert.Equal(result.Columns.Count, row.Length));
+        }
+        Assert.Throws<BusinessException>(() => service.Read(owner, new ReportFilter(ReportKind.Ventas, day, day.AddDays(-1))));
+    }
+
+    [Fact]
+    public void PlanPersistsFodaGoalsAndReadings()
+    {
+        var strategy = new Strategy(database);
+        var day = DateOnly.FromDateTime(DateTime.Today);
+        var goal = new Goal(0, "Mejorar rotación", "Revisar semanalmente", "", "Unidades por mes", "unidades", 45.5m, day.AddMonths(1), false);
+        var id = strategy.SaveGoal(owner, goal);
+        var profile = new PlanProfile("Atender a familias", "Crecer", "Respeto", "Servicio", "Nuevas líneas", "Espacio", "Competencia");
+        strategy.SaveProfile(owner, profile);
+        strategy.Measure(owner, id, 30.25m, "Medición inicial");
+        strategy.SaveGoal(owner, goal with { Id = id, Completed = true, Evaluation = "Evaluado" });
+        Assert.Equal(profile, strategy.Profile(owner));
+        Assert.True(Assert.Single(strategy.Goals(owner)).Completed);
+        Assert.Equal(30.25m, Assert.Single(strategy.Readings(owner, id)).Value);
+    }
+
+    [Fact]
+    public void ExistingSalesAndOwnerSurviveUpgradeAndRestoreFromPreviousSchema()
+    {
+        var priorPath = Path.Combine(folder, "previous.comercium");
+        var priorDatabase = new StoreDatabase(priorPath, pooling: false);
+        var oldOwner = new Accounts(priorDatabase);
+        Session prior;
+        using (var db = priorDatabase.Open())
+        {
+            db.GetService<IMigrator>().Migrate("SupplierPurchases");
+            prior = oldOwner.CreateOwner("Cuenta anterior", "anterior", "Clave anterior de prueba");
+            db.Database.ExecuteSqlRaw("UPDATE Roles SET Permissions = 511;");
+            db.Database.ExecuteSqlInterpolated($"INSERT INTO Sales (OperationId, UserId, OccurredUtc, Subtotal, Discount, Total, Cost) VALUES ({Guid.NewGuid()}, {prior.UserId}, {DateTime.UtcNow}, 1800, 100, 1700, 800);");
+            var id = db.Database.SqlQueryRaw<long>("SELECT Id AS Value FROM Sales").Single();
+            db.Database.ExecuteSqlInterpolated($"INSERT INTO Payments (SaleId, Method, Amount, Received) VALUES ({id}, 0, 1700, 1700);");
+            db.Database.ExecuteSqlInterpolated($"INSERT INTO Dispatches (SaleId, Status) VALUES ({id}, 0);");
+        }
+        new StoreBackups(database).Restore(owner, priorPath);
+        var upgraded = accounts.SignIn("anterior", "Clave anterior de prueba");
+        Assert.True(upgraded.Permissions.HasFlag(Permission.Reports | Permission.Finance | Permission.Plan | Permission.Clients));
+        var sale = Assert.Single(sales.Recent(upgraded));
+        Assert.Equal(1700, sale.Total);
+        Assert.Equal("", sale.Customer);
     }
 
     public void Dispose()

@@ -16,6 +16,12 @@ public sealed class SalesModel : ViewModel
     private readonly Session session;
     private readonly ICatalog catalog;
     private readonly ISales sales;
+    private readonly ICustomers customers;
+    private readonly ICash cashRegister;
+    private static readonly CustomerCard Anonymous = new(0, "Público general", null, "", false, true);
+    private IReadOnlyList<CustomerCard> customerOptions = [Anonymous];
+    private CustomerCard? customer = Anonymous;
+    private string cashStatus = "";
     private Guid operationId = Guid.NewGuid();
     private IReadOnlyList<ProductRow> products = [];
     private IReadOnlyList<SaleRow> history = [];
@@ -29,11 +35,13 @@ public sealed class SalesModel : ViewModel
     private string voidReason = "";
     private PaymentMethod method;
 
-    public SalesModel(Session session, DesktopDialogs dialogs, ICatalog catalog, ISales sales) : base(dialogs)
+    public SalesModel(Session session, DesktopDialogs dialogs, ICatalog catalog, ISales sales, ICustomers customers, ICash cashRegister) : base(dialogs)
     {
         this.session = session;
         this.catalog = catalog;
         this.sales = sales;
+        this.customers = customers;
+        this.cashRegister = cashRegister;
         Search = Action(SearchProducts);
         Add = Action(AddLine, () => SelectedProduct is not null);
         Remove = Action(RemoveLine, () => SelectedItem is not null);
@@ -41,11 +49,41 @@ public sealed class SalesModel : ViewModel
         Confirm = Action(ConfirmSale, () => HasItems);
         ExactCash = Action(() => Received = Display.Input(Total), () => HasItems && IsCash);
         PrintReceipt = Action(Print, () => SelectedSale is not null);
+        ViewReceipt = Action(() =>
+        {
+            if (SelectedSale is { } row)
+                Dialogs.Preview(ReportExporter.Receipt(sales.Receipt(session, row.Id)));
+        }, () => SelectedSale is not null);
+        SaveReceipt = Action(() =>
+        {
+            if (SelectedSale is { } row && Dialogs.SaveDocument($"Comercium-venta-{row.Id}", excel: false) is { } file)
+            {
+                ReportExporter.Save(ReportExporter.Receipt(sales.Receipt(session, row.Id)), file, excel: false);
+                Show("Comprobante guardado en PDF.");
+            }
+        }, () => SelectedSale is not null);
+        FindSales = Action(() => RefreshHistory());
         VoidSale = Action(Void, () => SelectedSale is { Voided: false } && session.Permissions.HasFlag(Permission.VoidSale));
     }
 
     public string Term { get; set; } = "";
-    public bool Wholesale { get; set; }
+    private bool wholesale;
+    public bool Wholesale { get => wholesale; set => Set(ref wholesale, value); }
+    public string HistoryTerm { get; set; } = "";
+    public DateTime? HistoryFrom { get; set; }
+    public DateTime? HistoryThrough { get; set; }
+    public string CashStatus { get => cashStatus; private set => Set(ref cashStatus, value); }
+    public IReadOnlyList<CustomerCard> CustomerOptions { get => customerOptions; private set => Set(ref customerOptions, value); }
+    public CustomerCard? Customer
+    {
+        get => customer;
+        set
+        {
+            Set(ref customer, value);
+            if (value != null)
+                Wholesale = value.Wholesale;
+        }
+    }
     public bool CanDiscount => session.Permissions.HasFlag(Permission.ApplyDiscount);
     public PaymentMethod[] Methods { get; } = Enum.GetValues<PaymentMethod>();
     public ObservableCollection<CartItem> Cart { get; } = [];
@@ -84,16 +122,31 @@ public sealed class SalesModel : ViewModel
     public ICommand Confirm { get; }
     public ICommand ExactCash { get; }
     public ICommand PrintReceipt { get; }
+    public ICommand ViewReceipt { get; }
+    public ICommand SaveReceipt { get; }
+    public ICommand FindSales { get; }
     public ICommand VoidSale { get; }
 
-    public void Refresh() => Run(() => { SearchProducts(); RefreshHistory(); });
+    public void Refresh() => Run(() =>
+    {
+        SearchProducts();
+        var id = Customer?.Id ?? 0;
+        var tariff = Wholesale;
+        CustomerOptions = [Anonymous, .. customers.ForSale(session)];
+        Customer = CustomerOptions.FirstOrDefault(row => row.Id == id) ?? Anonymous;
+        Wholesale = tariff;
+        CashStatus = cashRegister.IsOpen(session) ? "Caja abierta · El cobro en efectivo se asentará en caja."
+            : "Caja cerrada · El cobro quedará en el historial de ventas.";
+        RefreshHistory();
+    });
 
     private void SearchProducts() => Products = catalog.Search(session, Term, activeOnly: true);
 
     private void RefreshHistory(long? selectId = null)
     {
         var id = selectId ?? SelectedSale?.Id;
-        History = sales.Recent(session);
+        History = HistoryFrom != null || HistoryThrough != null || !string.IsNullOrWhiteSpace(HistoryTerm)
+            ? sales.Search(session, ToDate(HistoryFrom), ToDate(HistoryThrough), HistoryTerm) : sales.Recent(session);
         SelectedSale = History.SingleOrDefault(row => row.Id == id);
     }
 
@@ -148,10 +201,12 @@ public sealed class SalesModel : ViewModel
         var amount = Display.ParseMoney(Discount, "descuento");
         var cash = IsCash ? Display.ParseMoney(Received, "efectivo recibido") : 0;
         var id = sales.Confirm(session, new Checkout(operationId, Cart.Select(item =>
-            new CartLine(item.ProductId, item.Quantity, item.Wholesale, item.Price)).ToList(), amount, Method, cash));
+            new CartLine(item.ProductId, item.Quantity, item.Wholesale, item.Price)).ToList(), amount, Method, cash,
+            Customer is { Id: > 0 } person ? person.Id : null));
         var change = IsCash ? cash - Total : 0;
         operationId = Guid.NewGuid();
         Cart.Clear();
+        Customer = Anonymous;
         Discount = "0";
         Received = "";
         NotifyTotals();
@@ -166,6 +221,8 @@ public sealed class SalesModel : ViewModel
             return;
         var receipt = sales.Receipt(session, row.Id);
         var lines = new List<string> { $"{Display.Local(receipt.AtUtc):g} · {receipt.Cashier}", receipt.Voided ? "ANULADO" : "Venta en tienda" };
+        if (!string.IsNullOrWhiteSpace(receipt.Customer))
+            lines.Add($"Cliente {receipt.Customer}");
         lines.AddRange(receipt.Lines.Select(line => $"{line.Quantity} × {line.Name} ({line.Code}) · {Display.Money(line.UnitPrice * line.Quantity)}"));
         lines.AddRange([$"Subtotal {Display.Money(receipt.Subtotal)}", $"Descuento {Display.Money(receipt.Discount)}",
             $"Total {Display.Money(receipt.Total)} · {receipt.Method}"]);
@@ -202,4 +259,6 @@ public sealed class SalesModel : ViewModel
         try { return Display.ParseMoney(value, "importe"); }
         catch (BusinessException) { return 0; }
     }
+
+    private static DateOnly? ToDate(DateTime? date) => date.HasValue ? DateOnly.FromDateTime(date.Value) : null;
 }

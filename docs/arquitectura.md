@@ -129,7 +129,7 @@ Menú azul marino, superficies blancas, acento celeste y tipografía Segoe UI. L
 - SDK .NET 10 LTS con WPF y `net10.0-windows10.0.19041.0` para seleccionar las dependencias modernas del control gráfico. Microsoft limita el soporte de Windows 10 a las ediciones y versiones indicadas en su matriz. [Versiones de Windows admitidas](https://learn.microsoft.com/en-us/dotnet/core/install/windows#supported-versions)
 - `Microsoft.EntityFrameworkCore.Sqlite` 10.0.12 y herramientas de migración de la misma versión. [Proveedor SQLite](https://learn.microsoft.com/en-us/ef/core/providers/sqlite/)
 - `LiveChartsCore.SkiaSharpView.WPF` 2.0.5 para el tablero. [Paquete WPF](https://www.nuget.org/packages/LiveChartsCore.SkiaSharpView.WPF/2.0.5)
-- `PDFsharp-WPF` 6.2.4 para PDF y `ClosedXML` 0.105.0 para Excel, a integrar con los reportes. [PDFsharp para WPF](https://www.nuget.org/packages/PDFsharp-WPF/6.2.4), [ClosedXML](https://www.nuget.org/packages/ClosedXML/0.105.0)
+- `PDFsharp-MigraDoc-WPF` 6.2.4 para PDF y `ClosedXML` 0.105.0 para Excel. [MigraDoc para WPF](https://www.nuget.org/packages/PDFsharp-MigraDoc-WPF/6.2.4), [ClosedXML](https://www.nuget.org/packages/ClosedXML/0.105.0)
 - `Rfc2898DeriveBytes.Pbkdf2` de .NET para credenciales y xUnit para las pruebas. La distribución autónoma de .NET incluye el runtime de escritorio.
 
 ## 8. Decisiones de integridad y preguntas pendientes
@@ -141,7 +141,7 @@ Menú azul marino, superficies blancas, acento celeste y tipografía Segoe UI. L
 | Descuentos | Controlar el permiso en el caso de uso. Confirmar topes, montos y porcentajes por rol antes de habilitar otras cuentas. |
 | Anulación | Permitir anular antes de la entrega con motivo. Una devolución posterior requiere definir reintegro, estado del producto y caja de devolución. |
 | Despacho | Preparación y entrega se registran como eventos distintos. La cancelación comercial libera existencias mediante la anulación de venta. |
-| Caja | El saldo de efectivo usa cobros en efectivo, entradas y salidas. Ventas por transferencia y tarjeta pertenecen al total de ventas y se concilian por método. Confirmar si la caja abierta será obligatoria al cobrar. |
+| Caja | El saldo esperado parte del importe de apertura y agrega movimientos en efectivo. La caja abierta es opcional. Si se asentó un cobro en efectivo, el reintegro requiere una sesión abierta. La venta y el movimiento automático se guardan en la misma transacción. |
 | Comprobante | Emitir comprobante interno. La facturación tributaria requiere un alcance adicional. |
 | Copias de seguridad | Usar la API de respaldo SQLite y verificar integridad antes de restaurar. Las fotos se guardan dentro de la base para conservarlas junto con el respaldo. Una copia previa permite recuperar la base reemplazada. |
 | Usuarios | La propietaria se crea en la primera ejecución. Confirmar perfiles de cajero y encargado de despacho cuando se incorporen otras personas. |
