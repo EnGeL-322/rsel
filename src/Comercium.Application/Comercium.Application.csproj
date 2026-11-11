@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Comercium.Domain/Comercium.Domain.csproj" />
+  </ItemGroup>
+</Project>

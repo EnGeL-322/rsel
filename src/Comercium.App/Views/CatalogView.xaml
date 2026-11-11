@@ -1,0 +1,92 @@
+<UserControl x:Class="Comercium.App.Views.CatalogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+        <Border Style="{StaticResource Card}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="Catálogo" Style="{StaticResource Section}" />
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="Nombre o código" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Term, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nombre o código" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Categoría" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CategoryFilter, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Categoría para filtrar" />
+                        </StackPanel>
+                    </Grid>
+                    <WrapPanel Margin="0,0,0,12">
+                        <CheckBox Content="Solo activos" IsChecked="{Binding ActiveOnly}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <Button Content="Buscar" Command="{Binding Search}" Margin="0,0,6,0" />
+                        <Button Content="Editar" Command="{Binding Edit}" Margin="0,0,6,0" />
+                        <Button Content="Nuevo" Command="{Binding New}" Style="{StaticResource Primary}" />
+                    </WrapPanel>
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Message}" Style="{StaticResource Feedback}" />
+                <DataGrid ItemsSource="{Binding Products}" SelectedItem="{Binding Selected}" AutomationProperties.Name="Productos">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="75" />
+                        <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="90" />
+                        <DataGridTextColumn Header="Categoría" Binding="{Binding Category}" Width="*" MinWidth="80" />
+                        <DataGridTextColumn Header="Minorista" Binding="{Binding Retail, Converter={StaticResource Display}, ConverterParameter=money}" Width="85" />
+                        <DataGridTextColumn Header="Estado" Binding="{Binding Active, Converter={StaticResource Display}, ConverterParameter=active}" Width="95" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+        <Border Grid.Column="2" Style="{StaticResource Card}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,0,5,0">
+                    <TextBlock Text="Ficha del producto" Style="{StaticResource Section}" />
+                    <TextBlock Text="Código" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding Form.Code, UpdateSourceTrigger=PropertyChanged}" MaxLength="48" AutomationProperties.Name="Código" />
+                    <TextBlock Text="Nombre" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding Form.Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="140" AutomationProperties.Name="Nombre del producto" />
+                    <TextBlock Text="Categoría" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding Form.Category, UpdateSourceTrigger=PropertyChanged}" MaxLength="80" AutomationProperties.Name="Categoría" />
+                    <TextBlock Text="Unidad de medida" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding Form.Unit, UpdateSourceTrigger=PropertyChanged}" MaxLength="40" AutomationProperties.Name="Unidad de medida" />
+                    <TextBlock Text="Ubicación en tienda" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding Form.Location, UpdateSourceTrigger=PropertyChanged}" MaxLength="120" AutomationProperties.Name="Ubicación" />
+                    <TextBlock Text="Descripción" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding Form.Description, UpdateSourceTrigger=PropertyChanged}" MaxLength="1000" TextWrapping="Wrap" Height="52" AcceptsReturn="True" AutomationProperties.Name="Descripción" />
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition /></Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,7,0">
+                            <TextBlock Text="Costo (S/)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Form.Cost, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Costo" />
+                            <TextBlock Text="Mayorista (S/)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Form.Wholesale, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Precio mayorista" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Minorista (S/)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Form.Retail, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Precio minorista" />
+                            <TextBlock Text="Stock mínimo" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Form.Minimum, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stock mínimo" />
+                        </StackPanel>
+                    </Grid>
+                    <CheckBox Content="Producto activo" IsChecked="{Binding Form.Active}" Margin="0,10,0,8" />
+                    <Image Source="{Binding Preview}" MaxHeight="110" HorizontalAlignment="Left" Stretch="Uniform" />
+                    <WrapPanel Margin="0,8,0,0">
+                        <Button Content="Elegir foto" Command="{Binding ChoosePhoto}" Margin="0,0,6,0" />
+                        <Button Content="Quitar foto" Command="{Binding RemovePhoto}" />
+                    </WrapPanel>
+                    <Button Content="Guardar producto" Command="{Binding Save}" Style="{StaticResource Primary}" Margin="0,12,0,0" />
+                    <Expander Header="Historial de precios" Margin="0,14,0,0">
+                        <DataGrid ItemsSource="{Binding Prices}" MaxHeight="180" Margin="0,6,0,0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Fecha" Binding="{Binding AtUtc, Converter={StaticResource Display}}" />
+                                <DataGridTextColumn Header="Costo" Binding="{Binding Cost, Converter={StaticResource Display}, ConverterParameter=money}" />
+                                <DataGridTextColumn Header="Minorista" Binding="{Binding Retail, Converter={StaticResource Display}, ConverterParameter=money}" />
+                                <DataGridTextColumn Header="Mayorista" Binding="{Binding Wholesale, Converter={StaticResource Display}, ConverterParameter=money}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

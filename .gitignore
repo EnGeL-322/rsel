@@ -1,0 +1,11 @@
+.local-sdk/
+.local-tools/
+artifacts/
+**/bin/
+**/obj/
+TestResults/
+.vs/
+*.user
+*.db
+*.db-wal
+*.db-shm

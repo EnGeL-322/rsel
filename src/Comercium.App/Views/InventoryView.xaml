@@ -1,0 +1,57 @@
+<UserControl x:Class="Comercium.App.Views.InventoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="12" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="270" /></Grid.ColumnDefinitions>
+        <Border Style="{StaticResource Card}">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10" LastChildFill="True">
+                    <Button DockPanel.Dock="Right" Content="Buscar" Command="{Binding Search}" Margin="8,0,0,0" />
+                    <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding Filters}" SelectedItem="{Binding Filter}" Width="112" AutomationProperties.Name="Filtro de stock" />
+                    <TextBox Text="{Binding Term, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" AutomationProperties.Name="Nombre o código del producto" />
+                </DockPanel>
+                <DataGrid ItemsSource="{Binding Products}" SelectedItem="{Binding Selected}" AutomationProperties.Name="Existencias">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="95" />
+                        <DataGridTextColumn Header="Ubicación" Binding="{Binding Location}" Width="*" MinWidth="85" />
+                        <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="60" />
+                        <DataGridTextColumn Header="Mínimo" Binding="{Binding Minimum}" Width="70" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+        <Border Grid.Row="2" Style="{StaticResource Card}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Historial de movimientos" Style="{StaticResource Section}" />
+                <DataGrid ItemsSource="{Binding Movements}" AutomationProperties.Name="Historial de inventario">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Fecha" Binding="{Binding AtUtc, Converter={StaticResource Display}}" Width="120" />
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding Kind}" Width="76" />
+                        <DataGridTextColumn Header="Variación" Binding="{Binding Change}" Width="76" />
+                        <DataGridTextColumn Header="Saldo" Binding="{Binding Balance}" Width="55" />
+                        <DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="*" MinWidth="75" />
+                        <DataGridTextColumn Header="Usuario" Binding="{Binding User}" Width="90" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+        <Border Grid.Column="2" Grid.RowSpan="3" Style="{StaticResource Card}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Registrar movimiento" Style="{StaticResource Section}" />
+                    <TextBlock Text="{Binding Selected.Name, TargetNullValue=Selecciona un producto.}" FontWeight="SemiBold" />
+                    <TextBlock Text="Tipo de movimiento" Style="{StaticResource FieldLabel}" />
+                    <ComboBox ItemsSource="{Binding Kinds}" SelectedItem="{Binding Kind}" AutomationProperties.Name="Tipo de movimiento" />
+                    <TextBlock Text="Cantidad" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cantidad" />
+                    <TextBlock Text="Para un ajuste, escribe el total que contaste en tienda." Style="{StaticResource Hint}" Margin="0,5,0,0" />
+                    <TextBlock Text="Motivo" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" MaxLength="250" Height="67" TextWrapping="Wrap" AcceptsReturn="True" AutomationProperties.Name="Motivo" />
+                    <Button Content="Guardar movimiento" Command="{Binding Save}" Style="{StaticResource Primary}" Margin="0,13,0,0" />
+                    <TextBlock Text="{Binding Message}" Style="{StaticResource Feedback}" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

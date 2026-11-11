@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Comercium.App/Comercium.App.csproj" />
+    <Project Path="src/Comercium.Application/Comercium.Application.csproj" />
+    <Project Path="src/Comercium.Domain/Comercium.Domain.csproj" />
+    <Project Path="src/Comercium.Infrastructure/Comercium.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Comercium.Tests/Comercium.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,22 @@
+<Window x:Class="Comercium.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Comercium.App.ViewModels"
+        xmlns:views="clr-namespace:Comercium.App.Views"
+        Title="Comercium" Width="1280" Height="850" MinWidth="880" MinHeight="620"
+        Language="es-PE" WindowStartupLocation="CenterScreen" Style="{StaticResource AppWindow}">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:LoginModel}"><views:LoginView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:WorkspaceModel}"><views:WorkspaceView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DashboardModel}"><views:DashboardView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CatalogModel}"><views:CatalogView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:InventoryModel}"><views:InventoryView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PurchasesModel}"><views:PurchasesView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SalesModel}"><views:SalesView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DispatchModel}"><views:DispatchView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AccountModel}"><views:AccountView /></DataTemplate>
+    </Window.Resources>
+    <Border Background="{StaticResource Canvas}">
+        <ContentControl Content="{Binding Current}" />
+    </Border>
+</Window>
